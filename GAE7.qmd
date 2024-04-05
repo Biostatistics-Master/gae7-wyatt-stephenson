@@ -1,6 +1,6 @@
 ---
 title: "GAE7"
-author: "Your Name Here"
+author: "Wyatt Stephenson"
 format: 
   html:
     theme: custom.scss
@@ -17,6 +17,7 @@ bibliography: references.bib
 #| label: SetUp
 #| message: FALSE
 #| echo: FALSE
+#| warning: false
 
 knitr::opts_chunk$set(
   echo = FALSE,
@@ -49,7 +50,7 @@ Please see @Pintar.etal2018 for greater detail on experimental design and data c
 ```{r }
 #| label: dataImport
 
-df1 <- read_csv("Pintar_etal_2018.csv",
+df1 <- read_csv("Pintar_etal_2018.csv", 
                 show_col_types = FALSE)
 
 # Block = 1 to 9 for the 9 spatiotemporal blocks (3 locations X 3 times)
@@ -66,20 +67,266 @@ df1 <- read_csv("Pintar_etal_2018.csv",
 # factors so that, by default, polynomial contrasts will be used to compute the
 # ANOVAs.
 
-df1$Nutrient <- factor(df1$Nutrient,
-                       levels = c("0", "4", "8"),
-                       ordered = TRUE)
+df1$Nutrient <- factor(df1$Nutrient)
 
-df1$Fish <- factor(df1$Fish,
-                   levels = c("0", "1", "2"),
-                   ordered = TRUE)
+df1$Fish <- factor(df1$Fish
+                   )
 
 df1$Block <- factor(df1$Block)
+
+df1$Pool <- factor(df1$Pool)
+
+df1$Location <- factor(df1$Location)
+
+df1$Time <- factor(df1$Time)
 
 ```
 
 ### Statistical Methods
 
+First three linear models were created comparing Culex egg rafts, Hydrophilidae, and Dytiscidae against predation and nutrient levels along with the interaction between predation and nutrient levels using the @lmer package. Next a standard ANOVA was run for all three liner models using base @R . Lastly both a fixed effect and random effect ANOVA was run for all three linear models using the @lmer package.
+
 ## Results
+
+When looking at the results of our fixed affect ANOVAs we can see that only predation level had any significance and this was only in realtion to amount of Culex egg rafts and amount of Dytiscidae @tbl-FixedAnova and @tbl-FixedAnova3 . When comparing these fixed affect modelss to a random affect ANOVA we can see that the the fixed affect was the stronger model as seen by all three of the fixed affect modelss having a higher AIC score than the random affect ( @tbl-MixedAnova, @tbl-MixedAnova2, @tbl-MixedAnova3) and none of the AIC scores being even close to two unit delta need to consider them as better models,
+
+```{r}
+#| label: tbl-dataImport
+#| tbl-cap: "First six observations of data provided by @Pintar.etal2018"
+
+colnames(df1) <- tolower(colnames(df1))
+
+
+kbl(
+  head(df1),
+  col.names = c(
+    "Block",
+    "Pool",
+    "Location",
+    "Time",
+    "Nutrient",
+    "Fish",
+    "Culex Egg Rafts",
+    "Hydrophilidae",
+    "Dytisicidae"
+  )
+) |>
+  kable_classic(
+    full = FALSE
+  )
+```
+
+```{r}
+#| label: tbl-Culex
+#| tbl-cap: "Effects of predation and nutrient levels on Culfex egg rafts"
+#| fig-show: hide
+#| results: hide
+
+CulexFactorial <- lmer(culex_egg_rafts ~ fish*nutrient + (1 | block), data = df1)
+
+CulexAnova <- (anova(CulexFactorial))
+
+kbl(
+  CulexAnova, col.names = c(
+    "SS",
+    "MS",
+    "df1",
+    "df2",
+    "F",
+    "p"
+    
+  ),
+  digits = c(3,3,0,0,3,4)
+) |>
+  kable_classic()
+
+
+DytisFactorial <- lmer(dytiscidae ~ fish*nutrient + (1 | block), data = df1)
+
+DytisAnova <- (anova(DytisFactorial))
+
+kbl(
+  DytisAnova, col.names = c(
+    "SS",
+    "MS",
+    "df1",
+    "df2",
+    "F",
+    "p"
+    
+  ),
+  digits = c(3,3,0,0,3,4)
+) |>
+  kable_classic()
+
+HydroFactorial <- lmer(hydrophilidae ~ fish*nutrient + (1 | block), data = df1)
+
+HydroAnova <- (anova(HydroFactorial))
+
+kbl(
+  HydroAnova, col.names = c(
+    "SS",
+    "MS",
+    "df1",
+    "df2",
+    "F",
+    "p"
+    
+  ),
+  digits = c(3,3,0,0,3,4)
+) |>
+  kable_classic()
+
+
+```
+
+```{r}
+#| label: tbl-FixedAnova
+#| tbl-cap: " Fixed ANOVA summary for linear model of Culex egg rafts aginst predation and nutirent levels "
+
+kbl(
+  anova(CulexFactorial),
+  digits = c(3,0,3,3,4)
+) |> kable_classic()
+
+```
+
+```{r}
+#| label: tbl-FixedAnova2
+#| tbl-cap: " Fixed ANOVA summary for linear model of Hydrophilidae aginst predation and nutirent levels "
+
+kbl(
+  anova(HydroFactorial),
+  digits = c(3,0,3,3,4)
+) |> kable_classic()
+```
+
+```{r}
+#| label: tbl-FixedAnova3
+#| tbl-cap: " Fixed ANOVA summary for linear model of Dytiscidae aginst predation and nutirent levels "
+
+kbl(
+  anova(DytisFactorial),
+  digits = c(3,0,3,3,4)
+) |> kable_classic()
+```
+
+```{r}
+#| label: tbl-MixedAnova
+#| tbl-cap: "Linear mixed-effect model results for Culex egg rafts and predation and nutrient levels"
+#| tbl-subcap:
+#|     - "Fixed effect"
+#|     - "Random effect"
+#| layout-nrow: 2
+
+CulexMixed <- anova(CulexFactorial)
+
+kbl(
+  CulexMixed,
+  col.names = c(
+    "SS",
+    "MS",
+    "df1",
+    "df2",
+    "F",
+    "p"
+  ),
+  digits = c(3,3,0,0,3,4)
+) |>
+  kable_classic()
+
+kbl(
+  rand(CulexFactorial),
+  col.names = c(
+    "Parameters",
+    "log-liklehood",
+    "AIC",
+    "LRT",
+    "df",
+    "p"
+  ),
+  digits = c(0,3,3,3,0,4)
+)|>
+  kable_classic()
+
+```
+
+```{r}
+#| label: tbl-MixedAnova2
+#| tbl-cap: "Linear mixed-effect model results for Hydrophilidae and predation and nutrient levels"
+#| tbl-subcap:
+#|     - "Fixed effect"
+#|     - "Random effect"
+#| layout-nrow: 2
+
+HydroMixed <- anova(HydroFactorial)
+
+kbl(
+  HydroMixed,
+  col.names = c(
+    "SS",
+    "MS",
+    "df1",
+    "df2",
+    "F",
+    "p"
+  ),
+  digits = c(3,3,0,0,3,4)
+) |>
+  kable_classic()
+
+kbl(
+  rand(HydroFactorial),
+  col.names = c(
+    "Parameters",
+    "log-liklehood",
+    "AIC",
+    "LRT",
+    "df",
+    "p"
+  ),
+  digits = c(0,3,3,3,0,4)
+)|>
+  kable_classic()
+```
+
+```{r}
+#| label: tbl-MixedAnova3
+#| tbl-cap: "Linear mixed-effect model results for Dytiscidae and predation and nutrient levels"
+#| tbl-subcap:
+#|     - "Fixed effect"
+#|     - "Random effect"
+#| layout-nrow: 2
+
+DytisMixed <- anova(DytisFactorial)
+
+kbl(
+  DytisMixed,
+  col.names = c(
+    "SS",
+    "MS",
+    "df1",
+    "df2",
+    "F",
+    "p"
+  ),
+  digits = c(3,3,0,0,3,4)
+) |>
+  kable_classic()
+
+kbl(
+  rand(DytisFactorial),
+  col.names = c(
+    "Parameters",
+    "log-liklehood",
+    "AIC",
+    "LRT",
+    "df",
+    "p"
+  ),
+  digits = c(0,3,3,3,0,4)
+)|>
+  kable_classic()
+```
 
 ## References
